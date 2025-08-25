@@ -45,7 +45,7 @@
     "leaflet": "^1.9.4",
     "leaflet.fullscreen": "^3.0.2",
     "papaparse": "^5.5.3",
-    "react-router-dom": "^7.7.0",
+    "react-router-dom": "^7.8.2",
     "sass": "^1.77.2",
     "typescript": "^5.2.2",
     "vite": "^5.3.1",
