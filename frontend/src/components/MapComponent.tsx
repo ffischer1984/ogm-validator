@@ -1,6 +1,6 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 import React from "react";
-import { MapContainer, TileLayer, GeoJSON, LayersControl, useMap, ZoomControl } from "react-leaflet";
+import {GeoJSON, LayersControl, MapContainer, TileLayer, useMap, ZoomControl} from "react-leaflet";
 import L from "leaflet";
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.fullscreen/Control.FullScreen.css';
