@@ -20,8 +20,15 @@ jobs:
         run: cd frontend && npm ci
       - name: Build
         run: cd frontend && npm run build
+      - name: Setup mdbook
+        uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: 'latest'
+      - name: Build mdbook
+        run: mdbook build -d model/model-docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        id: ogm-validator
         with:
           path: 'frontend/dist/.'
   deploy:
