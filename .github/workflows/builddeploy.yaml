@@ -20,17 +20,19 @@ jobs:
         run: cd frontend && npm ci
       - name: Build
         run: cd frontend && npm run build
+      - name: move the ogm-validator to model/model-docs/book/ogm-validator
+        run: mkdir -p model/model-docs/book/ogm-validator && cp -R frontend/dist/* model/model-docs/book/ogm-validator
       - name: Setup mdbook
         uses: peaceiris/actions-mdbook@v2
         with:
           mdbook-version: 'latest'
       - name: Build mdbook
         run: cd model && mdbook build model-docs
-      - name: Upload artifact
+      - name: Upload model-docs
         uses: actions/upload-pages-artifact@v3
-        id: ogm-validator
+        id: ogm-model-docs
         with:
-          path: 'frontend/dist/.'
+          path: 'model/model-docs/book/.'
   deploy:
     needs: build
     runs-on: ubuntu-latest
