@@ -25,7 +25,7 @@ jobs:
         with:
           mdbook-version: 'latest'
       - name: Build mdbook
-        run: mdbook build -d model/model-docs
+        run: cd model && mdbook build model-docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         id: ogm-validator
