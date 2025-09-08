@@ -10,7 +10,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/ogm-validator" element={<FileValidator />} />
+        <Route path="" element={<FileValidator />} />
         {/* Add more routes here */}
       </Routes>
     </Router>

@@ -1,2 +1,2 @@
 # Einführung
-Hier ist gehts zum ogm-validator: [ogm-validator](ogm-validator/index.html){:target="_blank"}
+Hier ist gehts zum ogm-validator: <a href="ogm-validator/index.html" target="_blank">ogm-validator</a>
