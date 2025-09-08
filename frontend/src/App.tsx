@@ -8,11 +8,6 @@ import FileValidator from './components/FileValidator';
 
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="" element={<FileValidator />} />
-        {/* Add more routes here */}
-      </Routes>
-    </Router>
+    <FileValidator />
   );
 }
