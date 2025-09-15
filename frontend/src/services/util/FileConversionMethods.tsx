@@ -48,31 +48,4 @@ export const transformCsvToLocation = (data: any[]) => {
     });
 };
 
-// Transform CSV/Excel data to use location with nested latitude and longitude
-export const transformExcelToLocation = (data: any[]) => {
-    return data.map(row => {
-        const { primaryKey, kfwProjectNoINPRO, uniqueId, latitude, longitude, sector, location_type, plannedOrActualEndDate, plannedOrActualStartDate, dateOfDataCollection, ...rest } = row;
 
-        return {
-            type: "Feature",
-            geometry: {
-                type: "Point",
-                coordinates: [safeParseFloat(longitude), safeParseFloat(latitude)]
-            },
-            properties: {
-                primaryKey: primaryKey !== undefined && primaryKey !== null ? primaryKey.toString() : undefined,
-                kfwProjectNoINPRO: kfwProjectNoINPRO !== undefined && kfwProjectNoINPRO !== null ? kfwProjectNoINPRO?.toString() : undefined,
-                uniqueId: uniqueId !== undefined && uniqueId !== null ? uniqueId.toString() : undefined,
-                plannedOrActualEndDate: excelDateToString(plannedOrActualEndDate),
-                plannedOrActualStartDate: excelDateToString(plannedOrActualStartDate),
-                dateOfDataCollection: excelDateToString(dateOfDataCollection),
-                sector_location:
-                {
-                    sector: sector,
-                    location_type: location_type
-                },
-                ...rest
-            }
-        };
-    });
-};

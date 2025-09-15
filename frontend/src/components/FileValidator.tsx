@@ -1,163 +1,108 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 import './scss/FileValidator.scss'
 
-import React, { useState } from "react";
-import Ajv, { ErrorObject } from "ajv";
-import addFormats from "ajv-formats";
+import React, {useState} from "react";
 import Papa from "papaparse";
-import * as xlsx from "xlsx";
-import { WorkBook } from "xlsx";
 import MapComponent from "./MapComponent";
 
-import { transformCsvToLocation, transformExcelToLocation } from "../services/util/FileConversionMethods";
-import { saveAs } from 'file-saver';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import {transformCsvToLocation,} from "../services/util/FileConversionMethods";
+import {saveAs} from 'file-saver';
+import {
+	Button,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogContentText,
+	DialogTitle,
+	FormControl,
+	InputLabel,
+	MenuItem,
+	Select
+} from '@mui/material';
+
 import SendMailButton from "./SendMailButton.tsx";
-
-function getDataBySheetName(workbook: WorkBook, sheetName: string) {
-	const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { range: 2 });
-	return transformExcelToLocation(excelData);
-}
-
-function handleJsonFiles(areFormatsLoaded: boolean, ajv: Ajv, setValidationResult: (value: (((prevState: (string | null)) => (string | null)) | string | null)) => void, setGeoJsonDataWrap: (value: any) => void, file) {
-	const reader = new FileReader();
-	reader.onload = (e) => {
-		try {
-			//init validateProjects
-			if (!areFormatsLoaded)
-				return <p style={{ color: 'white' }}>Schemas couldn't loaded. Check your internet connection and please
-					refresh this page</p>
-
-			const validateProject = ajv.getSchema("feature_project_schema.json")
-
-			// Parse the uploaded GeoJSON
-			const geoJsonData = JSON.parse(e.target?.result as string);
-
-			// Check if the input is a Feature or a FeatureCollection
-			if (geoJsonData.type === "Feature") {
-				// Validate a single Feature
-				const isValid = validateProject ? validateProject(geoJsonData) : false;
-
-				if (isValid) {
-					setValidationResult("GeoJSON Feature is valid!");
-					setGeoJsonDataWrap({ type: "FeatureCollection", features: [geoJsonData] }); // Wrap in FeatureCollection
-				} else {
-					// Format validation errors
-					const formattedErrors = (validateProject.errors || []).map((error) => {
-						console.log(error);
-						const path = error.instancePath ? ` at "${error.instancePath}"` : "";
-						const message = error.message ? `: ${error.message}` : "";
-						return `Error${path}${message}`;
-					});
-					setValidationResult(`GeoJSON Feature Validation Errors:\n${formattedErrors.join("\n")}`);
-				}
-			} else if (geoJsonData.type === "FeatureCollection") {
-				// Validate each feature in the FeatureCollection
-				const transformedFeatures = geoJsonData.features.map((feature) => {
-					const isValid = validateProject ? validateProject(feature) : false;
-
-					if (isValid) {
-						return feature; // Include only valid features
-					} else {
-						console.log("Invalid feature:", feature);
-						// Optionally log or handle invalid features here
-						return null;
-					}
-				}).filter((feature) => feature !== null); // Remove invalid features
-
-				if (transformedFeatures.length === geoJsonData.features.length) {
-					setValidationResult("GeoJSON FeatureCollection is valid!");
-				} else {
-					setValidationResult(
-						"Some features in the GeoJSON FeatureCollection failed validation."
-					);
-				}
-
-				// Set the valid features in the state
-				setGeoJsonDataWrap({
-					type: "FeatureCollection",
-					features: transformedFeatures,
-				});
-			} else {
-				setValidationResult("Error: GeoJSON file must be a Feature or FeatureCollection.");
-			}
-		} catch (error) {
-			console.error(error);
-			setValidationResult("Error parsing GeoJSON file.");
-		}
-	};
-	reader.readAsText(file);
-}
-
-function handleCSVFiles(data: string | ArrayBuffer | null | undefined, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => (React.JSX.Element | undefined)) {
-	const parsedData = Papa.parse(data as string, { header: true }).data;
-	const transformedData = transformCsvToLocation(parsedData);
-	//setGeojson(transformedData);
-	setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData })
-	validateParsedData(transformedData);
-}
-
-function handleExcelFiles(
-	data: string | ArrayBuffer | null | undefined,
-	setOpenNoSheetDialog: (value: boolean) => void,
-	continueWithExcelErrors: boolean,
-	lastValidationStep: (workbook: WorkBook, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => React.JSX.Element) => void,
-	setGeoJsonDataWrap: (value: any) => void,
-	validateParsedData: (data: any[]) => React.JSX.Element,
-	setValidationResult: (message: string) => void  // Add this parameter
-) {
-	try {
-		const wb = xlsx.read(data, { type: "binary" })
-		const sheetName = wb.SheetNames[1];
-		const sheetNameArray: Array<string> = ["fill-me", "fill-me Remplissez-moi"];
-
-		if (!sheetNameArray.includes(sheetName)) {
-			setOpenNoSheetDialog(true)
-			if (!continueWithExcelErrors) {
-				return
-			}
-		}
-
-		lastValidationStep(wb, setGeoJsonDataWrap, validateParsedData);
-	} catch (error) {
-		if (error instanceof Error) {
-			setValidationResult(`Error processing Excel file: ${error.message}`);
-		} else {
-			setValidationResult('An unknown error occurred while processing the Excel file');
-		}
-	}
-}
+import {ExcelConverter, OGMFileTypes, SupportedLangs, Utils} from "../services/util/Utils.ts";
+import {ValidatorFactory} from "../services/util/Validator.ts";
 
 export default function FileValidator(): React.ReactElement {
-	const [lang, setLang] = useState<'en' | 'fr'>('en');
+	const [lang, setLang] = useState<SupportedLangs>('fr');
 	const [validationResult, setValidationResult] = useState<string | null>(null);
 	//const [ geojson, setGeojson ] = useState<any>(null);
 	const [geoJsonDataWrap, setGeoJsonDataWrap] = useState<any>(null);
 	const [fileInputKey, setFileInputKey] = useState<number>(0);
-	const [isPending, setIsPending] = useState(true)
-	const [areFormatsLoaded, setAreFormatsLoaded] = useState(false)
-	const [connErros, setConnErros] = useState("Loading...")
-	const [continueWithExcelErrors, setContinueWithExcelErrors] = useState(false)
 	const [enableEMailButton, setEnableEMailButton] = useState<boolean>(false);
 	const [openNoSheetDialog, setOpenNoSheetDialog] = React.useState(false);
 	const [inProNumbers, setInProNumbers] = useState<Set<string> | null>(null);
 
-	const branch = "250729-french-schema"
-	const schema_json_urls_en = [
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/sector_location_schema_en.json`,
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/dac5_schema.json`,
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/feature_project_schema.json`,
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/project_core_schema_en.json`
-	];
 
-	const schema_json_urls_fr = [
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/sector_location_schema_fr.json`,
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/dac5_schema.json`,
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/feature_project_schema.json`,
-		`https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/project_core_schema_fr.json`
-	];
+	function handleCSVFiles(data: string | ArrayBuffer | null | undefined) {
+		try {
+			const parsedData = Papa.parse(data as string, { header: true }).data;
+			const transformedData = transformCsvToLocation(parsedData);
+			//setGeojson(transformedData);
+			setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData })
+			validateParsedData(transformedData);
+		} catch (e) {
+			setValidationResult(`CSV-Files: ${e.message}`)
+		}
+	}
+
+	const handleJsonFiles = (file: File) => {
+		console.debug("handleJsonFiles")
+		Promise.all([file.text(), ValidatorFactory.getProjectValidator(lang)])
+		.then(([text, validateProjectFunction]) => {
+				//init validateProjects
+				const validateProject = validateProjectFunction
+
+				// Parse the uploaded GeoJSON
+				const geoJsonData = JSON.parse(text);
+
+				// Check if the input is a Feature or a FeatureCollection
+				switch (geoJsonData.type) {
+					case "Feature":
+						const isValid = validateProject ? validateProject(geoJsonData) : false;
+						if (isValid) {
+							setValidationResult("GeoJSON Feature is valid!");
+							setGeoJsonDataWrap({ type: "FeatureCollection", features: [geoJsonData] }); // Wrap in FeatureCollection
+						} else {
+							// Format validation errors
+							const formattedErrors = (validateProject.errors || [])
+								.map(Utils.toFormatErrors)
+								.join("\n");
+							setValidationResult(`GeoJSON Feature Validation Errors:\n${formattedErrors}`);
+						}
+						break;
+					case "FeatureCollection":
+						const transformedFeatures = geoJsonData.features
+							.map(Utils.toFeature, {validateProject})
+							.filter(Utils.notNull); // Remove invalid features
+
+						if (transformedFeatures.length === geoJsonData.features.length) {
+							setValidationResult("GeoJSON FeatureCollection is valid!");
+						} else {
+							setValidationResult(
+								"Some features in the GeoJSON FeatureCollection failed validation."
+							);
+						}
+
+						// Set the valid features in the state
+						setGeoJsonDataWrap({
+							type: "FeatureCollection",
+							features: transformedFeatures,
+						});
+						break;
+					default:
+						setValidationResult("Error: GeoJSON file must be a Feature or FeatureCollection.");
+						return;
+				}
+		})
+		.catch(e => {
+			console.error(e)
+			setValidationResult(`Errors at json-validating: ${e.message} `)
+		})
+	}
 	const resetMap = () => {
-
+		console.debug("resetMap()")
 		// Clear the GeoJSON data and reset the validation result
 		setGeoJsonDataWrap(null);
 		setValidationResult(null);
@@ -167,225 +112,106 @@ export default function FileValidator(): React.ReactElement {
 		setEnableEMailButton(false)
 
 	};
-
-
-	const fetchPromises = schema_json_urls_en.map(url => fetch(url).then(r => r.json()))
-	const fetchPromises_fr = schema_json_urls_fr.map(url => fetch(url).then(r => r.json()))
-	const ajv = new Ajv({ allErrors: true });
-	const ajv_fr = new Ajv({ allErrors: true });
-
-	function lastValidationStep(workbook: WorkBook, setGeoJsonDataWrap: (value: any) => void, validateParsedData: (data: any[]) => React.JSX.Element) {
-		if (!workbook) {
-			throw new Error('Workbook is null or undefined');
+	function handleExcelFiles(
+		data: string | ArrayBuffer | null | undefined
+	) {
+		try {
+			const transformedData =  ExcelConverter.toGeoJson(data as string | ArrayBuffer, lang)
+			console.log(transformedData);
+			validateParsedData(transformedData);
+			setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData });
+		} catch (error) {
+			console.error(error)
+			if (error instanceof Error) {
+				setValidationResult(`Error processing Excel file: ${error.message}`);
+			} else {
+				setValidationResult('An unknown error occurred while processing the Excel file');
+			}
 		}
-
-		const sheetNameMap = {
-			en: "fill-me",
-			fr: "fill-me Remplissez-moi",
-		};
-
-		if (!(lang in sheetNameMap)) {
-			throw new Error(`Unsupported language: ${lang}. Supported languages are: ${Object.keys(sheetNameMap).join(', ')}`);
-		}
-
-		const expectedSheetName = sheetNameMap[lang];
-
-		if (!workbook.SheetNames.includes(expectedSheetName)) {
-			throw new Error(
-				`Sheet "${expectedSheetName}" not found for language ${lang}. ` +
-				`Available sheets are: ${workbook.SheetNames.join(', ')}`
-			);
-		}
-
-		const transformedData = getDataBySheetName(workbook, expectedSheetName);
-		setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData });
-		validateParsedData(transformedData);
-		console.log(transformedData);
 	}
-
-	Promise.all(fetchPromises)
-		.then(results => {
-			results.map(r => ajv.addSchema(r))
-			return ajv
-		})
-		.then(ajv => {
-			addFormats(ajv)
-			setIsPending(false)
-			setAreFormatsLoaded(true)
-		})
-		.catch(e => {
-			setConnErros(e.message)
-		})
-
-	Promise.all(fetchPromises_fr)
-		.then(results => {
-			results.map(r => ajv_fr.addSchema(r))
-			return ajv_fr
-		})
-		.then(ajv_fr => {
-			addFormats(ajv_fr)
-			setIsPending(false)
-			setAreFormatsLoaded(true)
-		})
-		.catch(e => {
-			setConnErros(e.message)
-		})
 
 	// FileUpload Event und Filetyp-Verarbeitung
 	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 		resetMap()
+		console.debug("handleFileUpload()")
 		const file = event.target.files?.[0];
 		if (!file) return;
 
-		const fileType = file.type;
+		const fileType = file.type == "" && file.name.includes(".geojson") ? "application/geo+json" : file.type;
+		const reader = new FileReader();
 
-		//Fall 1. direktes Einspielen als GeoJson TODO: Bisher wird nur eine Feature als Geojson-Upload verarbeitet mehrere Features noch nicht
-		if (fileType === "application/json") {
-			handleJsonFiles(areFormatsLoaded, ajv, setValidationResult, setGeoJsonDataWrap, file);
-		}
-		//Upload CSV oder Excel
-		else if (fileType === "text/csv" || fileType === "application/vnd.ms-excel" || fileType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
-			// Parse CSV or Excel
-			const reader = new FileReader();
-			reader.onload = (e) => {
-				const data = e.target?.result;
-				if (fileType === "text/csv") {
-					// Parse CSV
-					handleCSVFiles(data, setGeoJsonDataWrap, validateParsedData);
-				} else {
-					handleExcelFiles(
-						data,
-						setOpenNoSheetDialog,
-						continueWithExcelErrors,
-						lastValidationStep,
-						setGeoJsonDataWrap,
-						validateParsedData,
-						setValidationResult  // Add this parameter
-					);
+		switch (fileType as keyof OGMFileTypes) {
+			case OGMFileTypes.GEOJSON:
+			case OGMFileTypes.JSON_APP:
+			case OGMFileTypes.JSON_TEXT:
+				//Fall 1. direktes Einspielen als GeoJson TODO: Bisher wird nur eine Feature als Geojson-Upload verarbeitet mehrere Features noch nicht
+				handleJsonFiles(file);
+				break;
+			case OGMFileTypes.CSV:
+				reader.onload = (e) => {
+					const data = e.target?.result;
+					handleCSVFiles(data);
 				}
-			};
-			reader.readAsBinaryString(file);
-		} else {
-			setValidationResult("Unsupported file type. Please upload a JSON, CSV, or Excel file.");
+				reader.readAsBinaryString(file);
+				break;
+			case OGMFileTypes.XLS:
+			case OGMFileTypes.OPENOFFICE:
+			case OGMFileTypes.XLSX:
+				reader.onload = (e) => {
+					const data = e.target?.result;
+					handleExcelFiles(data);
+				}
+				reader.readAsBinaryString(file);
+				break
+			default:
+				setValidationResult("Unsupported file type. Please upload a JSON, CSV, or Excel file.");
+				return;
 		}
-
 	};
 
 	const validateParsedData = (data: any[]) => {
+		ValidatorFactory
+			.getProjectValidator(lang)
+			.then((validateProjectFunction) => {
+				const validateProject = validateProjectFunction
+				// Validate each row in the CSV/Excel data, flatMap sonst ist allErrors Object nicht 0 von der Länge bei keinen fehlern
+					const allErrors = data
+						.flatMap((row, index) => {
+							validateProject(row);
+							if (validateProject.errors != null)
+								return Utils.formatAjvErrorsCSVExcel(validateProject.errors, index + 1);
+							else
+								return
+							//TODO: Format the errors for this row
+						})
+						.filter(Utils.notUndefined)
+					console.log("validateParsedData().allErrors", allErrors)
+					if (allErrors.length == 0) { // Wenn keine Fehler gefunden wurden & alle datenreihen eine inproNumber haben, dann aktiviere den Mail-Button
+						setValidationResult("Excel/CSV data is valid!");
+						console.log("validateParsedData().data:", data)
+						const localInproNumbers = data.map(ExcelConverter.removeWhiteSpaceInOneFeatureProperty)
+						console.log("validateParsedData().localInproNumbers:", localInproNumbers)
+						if (localInproNumbers.filter((n: any) => n === undefined && n === null).length > 0) { // this here should never happened, it just represent the worst case of data cause we've finished our validation-process!
+							setValidationResult("Something terrible happend, we've inpro-nos which are null or undefined and they passed our validation. Please check your data again and send this crazy dataset to the it-support (us), please.")
+							return;
+						}
+						setEnableEMailButton(true)
+						setInProNumbers(new Set(localInproNumbers))
+					} else {
+						setValidationResult(`Validation Errors:\n${allErrors.join("\n")}`);
+						setEnableEMailButton(false)
+					}
 
-		//init validateProjects
-		if (!areFormatsLoaded)
-			return <p style={{ color: 'white' }}>Schemas couldn't loaded. Check your internet connection and please refresh this page</p>
-
-		// declare once, in the outer scope
-		let validateProject;
-
-		if (lang === "en") {
-			validateProject = ajv.getSchema("feature_project_schema.json");
-		} else if (lang === "fr") {
-			validateProject = ajv_fr.getSchema("feature_project_schema.json");
-		} else {
-			throw new Error(`Unsupported language: ${lang}`);
-		}
-
-		// Validate each row in the CSV/Excel data, flatMap sonst ist allErrors Object nicht 0 von der Länge bei keinen fehlern
-		try {
-			if (!validateProject) {
-				setValidationResult("something went wrong")
-				return
-			}
-			const allErrors = data
-				.flatMap((row, index) => {
-					validateProject(row);
-					if (validateProject.errors != null)
-						return formatAjvErrorsCSVExcel(validateProject.errors, index + 1);
-					else
-						return
-					// Format the errors for this row
-				})
-				.filter(e => e !== undefined)
-			console.log("validateParsedData().allErrors", allErrors)
-			if (allErrors.length == 0) { // Wenn keine Fehler gefunden wurden & alle datenreihen eine inproNumber haben, dann aktiviere den Mail-Button
-				setValidationResult("Excel/CSV data is valid!");
-				console.log("validateParsedData().data:", data)
-				const localInproNumbers = data.map((f) => f.properties.kfwProjectNoINPRO.replaceAll(" ", ""))
-				console.log("validateParsedData().localInproNumbers:", localInproNumbers)
-				if (localInproNumbers.filter((n: any) => n === undefined && n === null).length > 0) { // this here should never happened, it just represent the worst case of data cause we've finished our validation-process!
-					setValidationResult("Something terrible happend, we've inpro-nos which are null or undefined and they passed our validation. Please check your data again and send this crazy dataset to the it-support (us), please.")
-					return;
-				}
-				setEnableEMailButton(true)
-				setInProNumbers(new Set(localInproNumbers))
-			} else {
-				setValidationResult(`Validation Errors:\n${allErrors.join("\n")}`);
-				setEnableEMailButton(false)
-			}
-		} catch (e) {
-			setValidationResult(e.message)
-		}
-
-	};
-
-	// formatieren der Fehler für Excel und CSV, ähnlich zu Geojson hier wird noch Zeilennummer mit angegeben
-	const formatAjvErrorsCSVExcel = (errors: ErrorObject[], rowNumber: number) => {
-
-		//console.log(errors)
-		if (!errors) {
-			return [];
-		}
-
-		// Check if there are any coordinate-related errors
-		const hasCoordinateErrors = errors.some(error =>
-		(error.instancePath && (
-			error.instancePath.startsWith("/geometry/coordinates") ||
-			error.instancePath === "/geometry/type" ||
-			(error.instancePath === "/geometry" &&
-				(error.message?.includes("required property") ||
-					error.message?.includes("must match exactly one schema") ||
-					error.message?.includes("must be null")))
-		))
-		);
-
-		// Initialize the result array
-		const resultErrors = [];
-
-		// If coordinate errors exist, add a single clear message
-		if (hasCoordinateErrors) {
-			resultErrors.push(`Row ${rowNumber}: Invalid or missing coordinates (latitude/longitude values). The project location is not printed on the map.`);
-		}
-
-		// Add all non-coordinate related errors
-		errors.forEach(error => {
-			// Skip coordinate-related errors since we've already added a consolidated message for them
-			if (error.instancePath && (
-				error.instancePath.startsWith("/geometry/coordinates") ||
-				error.instancePath === "/geometry/type" ||
-				(error.instancePath === "/geometry" &&
-					(error.message?.includes("required property") ||
-						error.message?.includes("must match exactly one schema") ||
-						error.message?.includes("must be null")))
-			)) {
-				return; // Skip this error
-			}
-
-			// Format and add other errors
-			const path = error.instancePath ? ` at "${error.instancePath}"` : "";
-			const message = error.message ? `: ${error.message}` : "";
-			resultErrors.push(`Row ${rowNumber}${path}${message}`);
-		});
-
-		return resultErrors;
+			}).catch (e => {
+				console.error(e)
+				setValidationResult(`Error: looks like you internet connection problems: ${e.message}`)
+			})
 	};
 
 	const downloadProcessed = () => {
-
 		const blob = new Blob([JSON.stringify(geoJsonDataWrap)], { type: 'application/geo+json' });
 		saveAs(blob, 'validated_data.geojson');
-
 	};
-
-	if (isPending)
-		return <p style={{ color: 'white' }}>{connErros}</p>
 	return <>
 		<div className='file_validator'>
 
@@ -432,7 +258,7 @@ export default function FileValidator(): React.ReactElement {
 				<input
 					key={fileInputKey}
 					type="file"
-					accept=".json,.csv,.xlsx"
+					accept=".json,.csv,.xlsx,.geojson"
 					onChange={handleFileUpload}
 				/>
 				<SendMailButton isEnabled={enableEMailButton} {...(inProNumbers ? { inProNumbers: [...inProNumbers] } : {})} />
