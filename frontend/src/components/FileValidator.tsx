@@ -27,7 +27,6 @@ import {ValidatorFactory} from "../services/util/Validator.ts";
 export default function FileValidator(): React.ReactElement {
 	const [lang, setLang] = useState<SupportedLangs>('fr');
 	const [validationResult, setValidationResult] = useState<string | null>(null);
-	//const [ geojson, setGeojson ] = useState<any>(null);
 	const [geoJsonDataWrap, setGeoJsonDataWrap] = useState<any>(null);
 	const [fileInputKey, setFileInputKey] = useState<number>(0);
 	const [enableEMailButton, setEnableEMailButton] = useState<boolean>(false);
@@ -39,7 +38,6 @@ export default function FileValidator(): React.ReactElement {
 		try {
 			const parsedData = Papa.parse(data as string, { header: true }).data;
 			const transformedData = transformCsvToLocation(parsedData);
-			//setGeojson(transformedData);
 			setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData })
 			validateParsedData(transformedData);
 		} catch (e) {
@@ -59,41 +57,44 @@ export default function FileValidator(): React.ReactElement {
 
 				// Check if the input is a Feature or a FeatureCollection
 				switch (geoJsonData.type) {
-					case "Feature":
-						const isValid = validateProject ? validateProject(geoJsonData) : false;
-						if (isValid) {
-							setValidationResult("GeoJSON Feature is valid!");
-							setGeoJsonDataWrap({ type: "FeatureCollection", features: [geoJsonData] }); // Wrap in FeatureCollection
-						} else {
-							// Format validation errors
-							const formattedErrors = (validateProject.errors || [])
-								.map(Utils.toFormatErrors)
-								.join("\n");
-							setValidationResult(`GeoJSON Feature Validation Errors:\n${formattedErrors}`);
-						}
-						break;
-					case "FeatureCollection":
-						const transformedFeatures = geoJsonData.features
-							.map(Utils.toFeature, {validateProject})
-							.filter(Utils.notNull); // Remove invalid features
+					case "Feature": {
+                        const isValid = validateProject ? validateProject(geoJsonData) : false;
+                        if (isValid) {
+                            setValidationResult("GeoJSON Feature is valid!");
+                            setGeoJsonDataWrap({type: "FeatureCollection", features: [geoJsonData]}); // Wrap in FeatureCollection
+                        } else {
+                            // Format validation errors
+                            const formattedErrors = (validateProject.errors || [])
+                                .map(Utils.toFormatErrors)
+                                .join("\n");
+                            setValidationResult(`GeoJSON Feature Validation Errors:\n${formattedErrors}`);
+                        }
+                        break;
+                    }
+					case "FeatureCollection": {
+                        const transformedFeatures = geoJsonData.features
+                            .map(Utils.toFeature, {validateProject})
+                            .filter(Utils.notNull); // Remove invalid features
 
-						if (transformedFeatures.length === geoJsonData.features.length) {
-							setValidationResult("GeoJSON FeatureCollection is valid!");
-						} else {
-							setValidationResult(
-								"Some features in the GeoJSON FeatureCollection failed validation."
-							);
-						}
+                        if (transformedFeatures.length === geoJsonData.features.length) {
+                            setValidationResult("GeoJSON FeatureCollection is valid!");
+                        } else {
+                            setValidationResult(
+                                "Some features in the GeoJSON FeatureCollection failed validation."
+                            );
+                        }
 
-						// Set the valid features in the state
-						setGeoJsonDataWrap({
-							type: "FeatureCollection",
-							features: transformedFeatures,
-						});
-						break;
-					default:
-						setValidationResult("Error: GeoJSON file must be a Feature or FeatureCollection.");
-						return;
+                        // Set the valid features in the state
+                        setGeoJsonDataWrap({
+                            type: "FeatureCollection",
+                            features: transformedFeatures,
+                        });
+                        break;
+                    }
+					default: {
+                        setValidationResult("Error: GeoJSON file must be a Feature or FeatureCollection.");
+                        return;
+                    }
 				}
 		})
 		.catch(e => {
@@ -115,7 +116,7 @@ export default function FileValidator(): React.ReactElement {
 		data: string | ArrayBuffer | null | undefined
 	) {
 		try {
-			const transformedData =  ExcelConverter.toGeoJson(data as string | ArrayBuffer, lang)
+			const transformedData =  ExcelConverter.toGeoJson(data, lang)
 			console.log(transformedData);
 			validateParsedData(transformedData);
 			setGeoJsonDataWrap({ type: "FeatureCollection", features: transformedData });
@@ -211,8 +212,7 @@ export default function FileValidator(): React.ReactElement {
 		const blob = new Blob([JSON.stringify(geoJsonDataWrap)], { type: 'application/geo+json' });
 		saveAs(blob, 'validated_data.geojson');
 	};
-	return <>
-		<div className='file_validator'>
+	return <div className='file_validator'>
 
 			<Dialog
 				open={openNoSheetDialog}
@@ -312,6 +312,4 @@ export default function FileValidator(): React.ReactElement {
 			</ul>
 
 		</div>
-
-	</>
 }
