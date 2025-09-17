@@ -107,7 +107,6 @@ export default function FileValidator(): React.ReactElement {
 		setGeoJsonDataWrap(null);
 		setValidationResult(null);
 		setFileInputKey(0);
-		setContinueWithExcelErrors(false)
 		setOpenNoSheetDialog(false)
 		setEnableEMailButton(false)
 
