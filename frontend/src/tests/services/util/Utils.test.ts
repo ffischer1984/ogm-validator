@@ -25,9 +25,6 @@ describe("Utils", () => {
     });
 
     describe("toFeature", () => {
-        it("just should fail", () => {
-            expect(true).toBe(false);
-        })
         it("returns feature if validateProject returns true", () => {
             Utils.validateProject = () => true;
             const feature = { foo: "bar" };
