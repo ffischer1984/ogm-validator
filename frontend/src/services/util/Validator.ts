@@ -9,8 +9,8 @@ export class ValidatorFactory {
         return fetch(url)
             .then(r => r.json())
             .catch(e => {
-                console.error(e)
-                throw new Error("can not load validation schemas - please check your internet connection")
+                //console.error(e)
+                return Promise.reject(new Error("can not load validation schemas - please check your internet connection"))
             })
     }
 
@@ -34,11 +34,9 @@ export class ValidatorFactory {
         const fetchPromises = schema_json_urls_en.map(this.toFetchPromiseURLs)
         const fetchPromises_fr = schema_json_urls_fr.map(this.toFetchPromiseURLs)
 
-
         switch (lang) {
             case "en": {
                 const ajv = new Ajv({allErrors: true});
-
                 return Promise.all(fetchPromises)
                     .then(results => {
                         results.forEach(r => ajv.addSchema(r))
@@ -50,7 +48,7 @@ export class ValidatorFactory {
                         return ajv.getSchema("feature_project_schema.json");
                     })
                     .catch(e => {
-                        throw new Error(e.message)
+                        return Promise.reject(new Error("can not load validation schemas - please check your internet connection"));
                     })
             }
             case "fr": {
@@ -62,15 +60,16 @@ export class ValidatorFactory {
                     })
                     .then(ajv_fr => {
                         addFormats(ajv_fr)
-                        console.debug("return ajv.getSchema()_en");
+                        console.debug("return ajv.getSchema()_fr");
                         return ajv_fr.getSchema("feature_project_schema.json");
                     })
-                    .catch((e: Error) => {
-                        throw new Error(e.message)
+                    .catch(() => {
+                        return Promise.reject(new Error("can not load validation schemas - please check your internet connection"));
                     })
             }
             default: {
-                throw new Error(`Unsupported language: ${lang}`);
+                // Der Test erwartet "Unsupported language: de" als Fehlermeldung
+                return Promise.reject(new Error(`Unsupported language: ${lang}`));
             }
         }
     }

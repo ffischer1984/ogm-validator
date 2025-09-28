@@ -1,5 +1,7 @@
 import {describe, expect, it, jest} from "@jest/globals";
 import {ValidatorFactory} from "../../../services/util/Validator.ts";
+import { spyOn } from 'jest-mock';
+
 
 type FetchResponse = { json: () => Promise<any> };
 
@@ -63,12 +65,6 @@ describe("ValidatorFactory.getProjectValidator", () => {
         expect(validator({})).toBe(false);
     });
 
-    it("returns Error synchronously for unsupported language", () => {
-        const res = ValidatorFactory.getProjectValidator("de" as any);
-        expect(res).toBeInstanceOf(Error);
-        expect((res as Error).message).toMatch(/Unsupported language/);
-    });
-
     it("propagates fetch failure as rejected promise for 'en'", async () => {
         mockFetchFailure("dac5_schema");
         await expect(ValidatorFactory.getProjectValidator("en") as Promise<any>)
@@ -76,11 +72,17 @@ describe("ValidatorFactory.getProjectValidator", () => {
             .toThrow("can not load validation schemas - please check your internet connection");
     });
 
-    it("returns resolved Error object on fetch failure for 'fr'", async () => {
+    it("propagates fetch failure as rejected promise for 'fr'", async () => {
         mockFetchFailure("dac5_schema");
-        const result = await (ValidatorFactory.getProjectValidator("fr") as Promise<any>);
-        expect(result).toBeInstanceOf(Error);
-        expect(result.message).toBe("can not load validation schemas - please check your internet connection");
+        await expect(ValidatorFactory.getProjectValidator("fr") as Promise<any>)
+            .rejects
+            .toThrow("can not load validation schemas - please check your internet connection");
+    });
+
+    it("rejects promise for unsupported language", async () => {
+        await expect(ValidatorFactory.getProjectValidator("de" as any))
+            .rejects
+            .toThrow("Unsupported language: de");
     });
 
     it("validator fails when required field missing", async () => {
