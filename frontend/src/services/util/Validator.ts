@@ -17,18 +17,21 @@ export class ValidatorFactory {
     public static getProjectValidator(lang: SupportedLangs): Promise<ValidateFunction<unknown> | AsyncValidateFunction<unknown>> {
         console.debug("getProjectValidator");
         const branch = "250729-french-schema"
+        //avoid raw.githubusercontent.com //https://stackoverflow.com/questions/64792450/avoiding-getting-cached-content-from-raw-githubusercontent-com#:~:text=It%20will%20sometimes%20return%20cached,new%20commit%20to%20that%20branch
+        // so we'll try another url: https://github.com/openkfw/open-geodata-model/raw/refs/heads/250729-french-schema/references/generated_sector_location_schema.json
+        const URL_PREFIX = "https://github.com/openkfw/open-geodata-model/raw/refs/heads"
         const schema_json_urls_en = [
-            `https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/sector_location_schema_en.json`,
-            `https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/dac5_schema.json`,
-            `https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/feature_project_schema.json`,
-            `https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/project_core_schema_en.json`
+            `${URL_PREFIX}/${branch}/references/sector_location_schema_en.json`,
+            `${URL_PREFIX}/${branch}/references/dac5_schema.json`,
+            `${URL_PREFIX}/${branch}/references/feature_project_schema.json`,
+            `${URL_PREFIX}/${branch}/references/project_core_schema_en.json`
         ];
 
         const schema_json_urls_fr = [
-            `https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/sector_location_schema_fr.json`,
-            `https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/dac5_schema.json`,
-            `https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/feature_project_schema.json`,
-            `https://raw.githubusercontent.com/openkfw/open-geodata-model/${branch}/references/project_core_schema_fr.json`
+            `${URL_PREFIX}/${branch}/references/sector_location_schema_fr.json`,
+            `${URL_PREFIX}/${branch}/references/dac5_schema.json`,
+            `${URL_PREFIX}/${branch}/references/feature_project_schema.json`,
+            `${URL_PREFIX}/${branch}/references/project_core_schema_fr.json`
         ];
 
         const fetchPromises = schema_json_urls_en.map(this.toFetchPromiseURLs)
