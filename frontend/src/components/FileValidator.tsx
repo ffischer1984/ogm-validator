@@ -171,6 +171,7 @@ export default function FileValidator(): React.ReactElement {
 
 	const validateParsedData = (data: any[]) => {
 		ValidatorFactory
+			.createWithHttp()
 			.getProjectValidator(lang)
 			.then((validateProjectFunction) => {
 				const validateProject = validateProjectFunction
