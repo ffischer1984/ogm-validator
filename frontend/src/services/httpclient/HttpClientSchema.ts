@@ -7,7 +7,7 @@ import {SupportedLangs} from "../util/Utils.ts";
  */
 export class HttpClientSchema extends BaseHttpClientSchema {
     private static readonly branch = "250729-french-schema";
-    private static readonly URL_PREFIX = "https://github.com/openkfw/open-geodata-model/raw/refs/heads";
+    private static readonly URL_PREFIX = "https://raw.githubusercontent.com/openkfw/open-geodata-model/refs/heads";
 
     private static schemaUrls(lang: SupportedLangs): string[] {
         const b = HttpClientSchema.branch;

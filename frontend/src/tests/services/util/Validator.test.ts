@@ -1,6 +1,8 @@
 import {describe, expect, it} from "@jest/globals";
 import {ValidatorFactory} from "../../../services/util/Validator.ts";
 import {BaseHttpClientSchema} from "../../../services/httpclient/BaseHttpClientSchema.ts";
+import validateDataEng from "../../assets/validate_en.json";
+import validateDataFr from "../../assets/validate_data_fr.json";
 
 
 // Hilfsklasse um einen Fehler beim Laden zu simulieren
@@ -22,7 +24,7 @@ describe("ValidatorFactory (DI) getProjectValidator", () => {
         expect(typeof validator).toBe("function");
         // feature_project_schema.json verlangt required [foo]; unsere lokale Datei muss das widerspiegeln
         // Falls nicht vorhanden, wird Test entsprechend angepasst
-        const valid = validator({ foo: "bar" });
+        const valid = validator(validateDataEng);
         const invalid = validator({});
         expect(valid).toBe(true);
         expect(invalid).toBe(false);
@@ -31,7 +33,7 @@ describe("ValidatorFactory (DI) getProjectValidator", () => {
     it("returns a validator function for 'fr' and validates correctly", async () => {
         const validator = await factoryWithMock().getProjectValidator("fr") as any;
         expect(typeof validator).toBe("function");
-        const valid = validator({ foo: "baz" });
+        const valid = validator(validateDataFr);
         const invalid = validator({});
         expect(valid).toBe(true);
         expect(invalid).toBe(false);
@@ -57,7 +59,7 @@ describe("ValidatorFactory (DI) getProjectValidator", () => {
 
     it("validator fails when required field missing", async () => {
         const validator = await factoryWithMock().getProjectValidator("en") as any;
-        const ok = validator({ foo: "value" });
+        const ok = validator(validateDataEng);
         const bad = validator({ other: "x" });
         expect(ok).toBe(true);
         expect(bad).toBe(false);
