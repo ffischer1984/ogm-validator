@@ -20,8 +20,8 @@ jobs:
           - name: Install Dependencies
             run: cd frontend && npm ci
           - name: test
-            run: cd frontend && npm test -- --watchAll=false
+            run: cd frontend && npx jest --ci --json --coverage --testLocationInResults --outputFile=report.json
           - uses: ArtiomTr/jest-coverage-report-action@v2
             with:
-              test-script: 'cd frontend && npx jest'
+              coverage-file: .frontend/coverage/report.json
 
