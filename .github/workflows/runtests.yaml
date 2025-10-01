@@ -27,5 +27,11 @@ jobs:
           - uses: ArtiomTr/jest-coverage-report-action@v2
             with:
               working-directory: ./frontend
+              jest-report-path: report.json
+          - name: SonarQube Scan
+            uses: SonarSource/sonarqube-scan-action@v6
+            env:
+              SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
+
 
 
