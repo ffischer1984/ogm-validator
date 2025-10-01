@@ -9,6 +9,7 @@ jobs:
         permissions:
           contents: write # for schemas
           pull-requests: write
+          checks: write
         runs-on: ubuntu-latest
         steps:
           - name: Checkout
@@ -21,7 +22,10 @@ jobs:
             run: cd frontend && npm ci
           - name: test
             run: cd frontend && npx jest --ci --json --coverage --testLocationInResults --outputFile=report.json
+          - name: show report
+            run: cat ./frontend/report.json
           - uses: ArtiomTr/jest-coverage-report-action@v2
             with:
-              coverage-file: .frontend/coverage/report.json
+              working-directory: ./frontend
+
 
