@@ -20,8 +20,8 @@ jobs:
         with:
           # This part is also where you can pass other options, for example:
           prettier_options: --write **/*.{ts,tsx,js,md}
-      - name: Setup mdbook
-        uses: peaceiris/actions-mdbook@v2
+      - name: Setup mdbook-v2
+        uses: peaceiris/actions-mdbook@ee69d230fe19748b7abf22df32acaa93833fad08
         with:
           mdbook-version: 'latest'
       - name: Build mdbook
