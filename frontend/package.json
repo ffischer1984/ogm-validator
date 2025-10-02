@@ -12,6 +12,10 @@
     "deploy": "gh-pages -d dist",
     "test": "jest"
   },
+  "jest": {
+    "coverageReporters": ["text", "json-summary", "json"],
+    "coverageDirectory": "coverage"
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",

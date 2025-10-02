@@ -21,13 +21,14 @@ jobs:
           - name: Install Dependencies
             run: cd frontend && npm ci
           - name: test
-            run: cd frontend && npm jest --ci --json --coverage --testLocationInResults --outputFile=report.json
-          - name: show report
-            run: cat ./frontend/report.json
-          - uses: ArtiomTr/jest-coverage-report-action@v2.3.1
+            run: cd frontend && npx jest --ci --json --coverage --testLocationInResults --outputFile=report.json && cat package.json
+
+          - name: Jest coverage report
+            uses: ArtiomTr/jest-coverage-report-action@v2.3.1
             with:
+              test-script: npx jest --ci --json --coverage --testLocationInResults --outputFile=report.json
               working-directory: ./frontend
-              jest-report-path: report.json
+              github-token: ${{ secrets.GITHUB_TOKEN }}
 #          - name: SonarQube Scan - doesn't work - is needed for codecoverage in sonarcloud
 #            uses: SonarSource/sonarqube-scan-action@v5
 #            env:
