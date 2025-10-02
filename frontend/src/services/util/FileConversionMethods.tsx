@@ -1,10 +1,11 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 export const excelDateToString = (excelDate: number): string => {
     try {
-        // Excel dates are serialized as days from January 1, 1900, but Excel considers 1900 a leap year
-        const excelEpoch = new Date(1900, 0, 1); // January 1, 1900
-        const date = new Date(excelEpoch.getTime() + (excelDate - 1) * 24 * 60 * 60 * 1000); // Adjust for days
-        return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
+        if (typeof excelDate !== 'number' || isNaN(excelDate)) return String(excelDate);
+        // Excel's day 1 is 1900-01-01, but JS Date.UTC(1899, 11, 31) is day 0
+        const utc_days = Math.floor(excelDate - 1);
+        const utc_value = Date.UTC(1899, 11, 31) + utc_days * 86400000;
+        return new Date(utc_value).toISOString().slice(0, 10);
     } catch (error) {
         return "" + excelDate;
     }
@@ -47,5 +48,3 @@ export const transformCsvToLocation = (data: any[]) => {
         };
     });
 };
-
-
