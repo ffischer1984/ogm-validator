@@ -61,7 +61,11 @@ export class ExcelConverter {
         return f.properties.kfwProjectNoINPRO.replaceAll(" ", "")
     }
     public static toGeoJson(data: string | ArrayBuffer | null | undefined, lang: SupportedLangs) {
-        const wb = xlsx.read(data, {type: "binary"})
+        // Support both Buffer (Node.js) and binary string (browser)
+        const wb = xlsx.read(
+            Buffer.isBuffer(data) ? data : data as string,
+            { type: Buffer.isBuffer(data) ? "buffer" : "binary" }
+        );
         const sheetName = wb.SheetNames[1];
         const sheetNameArray: Array<string> = ["fill-me", "fill-me Remplissez-moi"];
         const hasCorrectSheet = sheetNameArray.includes(sheetName);
@@ -85,7 +89,7 @@ export class ExcelConverter {
 
         if (!wb.SheetNames.includes(expectedSheetName)) {
             throw new Error(
-                `Sheet "${expectedSheetName}" not found for language ${lang}. ` +
+                `Sheet \"${expectedSheetName}\" not found for language ${lang}. ` +
                 `Available sheets are: ${wb.SheetNames.join(', ')}`
             );
         }

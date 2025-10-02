@@ -3,7 +3,7 @@ import addFormats from "ajv-formats";
 import {SupportedLangs} from "./Utils.ts";
 import {HttpClientSchema} from "../httpclient/HttpClientSchema.ts";
 import {BaseHttpClientSchema} from "../httpclient/BaseHttpClientSchema.ts";
-import {MockHttpClientSchema} from "../httpclient/MockHttpClientSchema.ts";
+import {MockHttpClientSchema} from "../../tests/services/httpclient/MockHttpClientSchema.ts";
 
 export class ValidatorFactory {
     // Standard Instanz für produktiven Code (HttpClientSchema)

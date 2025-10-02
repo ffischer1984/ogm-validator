@@ -1,6 +1,6 @@
 // filepath: frontend/src/services/httpclient/MockHttpClientSchema.ts
-import {BaseHttpClientSchema} from "./BaseHttpClientSchema.ts";
-import {SupportedLangs} from "../util/Utils.ts";
+import {BaseHttpClientSchema} from "../../../services/httpclient/BaseHttpClientSchema.ts";
+import {SupportedLangs} from "../../../services/util/Utils.ts";
 import * as fs from "fs";
 import * as path from "path";
 

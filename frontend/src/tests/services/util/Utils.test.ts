@@ -1,6 +1,8 @@
 import {ExcelConverter, Utils} from "../../../services/util/Utils.ts";
 import {ErrorObject} from "ajv";
 
+
+
 describe("Utils", () => {
     describe("toFormatErrors", () => {
         it("formats error with instancePath and message", () => {
@@ -106,6 +108,47 @@ describe("ExcelConverter", () => {
         it("removes all spaces from kfwProjectNoINPRO", () => {
             const feature = { properties: { kfwProjectNoINPRO: "A B C 123" } };
             expect(ExcelConverter.removeWhiteSpaceInOneFeatureProperty(feature)).toBe("ABC123");
+        });
+    });
+
+    describe("toGeoJson", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const assetsDir = path.resolve(__dirname, "../../assets");
+
+        function loadFile(filename) {
+            return fs.readFileSync(path.join(assetsDir, filename));
+        }
+
+        it("parses valid English template", () => {
+            const data = loadFile("Project_Location_Data_Template_EN_V03.xlsx");
+            const features = ExcelConverter.toGeoJson(data, "en");
+            expect(Array.isArray(features)).toBe(true);
+            expect(features.length).toBeGreaterThan(0);
+            expect(features[0]).toHaveProperty("type", "Feature");
+        });
+
+        it("parses valid French template", () => {
+            const data = loadFile("Project_Location_Data_Template_FR_V03.xlsx");
+            const features = ExcelConverter.toGeoJson(data, "fr");
+            expect(Array.isArray(features)).toBe(true);
+            expect(features.length).toBeGreaterThan(0);
+            expect(features[0]).toHaveProperty("type", "Feature");
+        });
+
+        it("throws error for missing sheet", () => {
+            const data = loadFile("sheet_not_found.xlsx");
+            expect(() => ExcelConverter.toGeoJson(data, "en")).toThrow(/does not contain a valid sheet/);
+        });
+
+        it("throws error for unsupported language", () => {
+            const data = loadFile("Project_Location_Data_Template_EN_V03.xlsx");
+            expect(() => ExcelConverter.toGeoJson(data, "de")).toThrow(/Unsupported language/);
+        });
+
+        it("throws error if expected sheet for lang is not present", () => {
+            const data = loadFile("Project_Location_Data_Template_EN_V03.xlsx");
+            expect(() => ExcelConverter.toGeoJson(data, "fr")).toThrow(/Sheet "fill-me Remplissez-moi" not found/);
         });
     });
 });
