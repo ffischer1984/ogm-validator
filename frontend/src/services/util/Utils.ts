@@ -61,10 +61,10 @@ export class ExcelConverter {
         return f.properties.kfwProjectNoINPRO.replaceAll(" ", "")
     }
     public static toGeoJson(data: string | ArrayBuffer | null | undefined, lang: SupportedLangs) {
-        // Support both Buffer (Node.js) and binary string (browser)
         const wb = xlsx.read(
-            Buffer.isBuffer(data) ? data : data as string,
-            { type: Buffer.isBuffer(data) ? "buffer" : "binary" }
+            // Support both Buffer (Node.js / testing) and binary string (browser)
+            typeof data === 'string' ? data as string : data, //if it's a buffer it comes from testing-code/nodejs
+            { type: typeof data === 'string' ? "binary" : "buffer" }
         );
         const sheetName = wb.SheetNames[1];
         const sheetNameArray: Array<string> = ["fill-me", "fill-me Remplissez-moi"];
