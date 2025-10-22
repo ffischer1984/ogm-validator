@@ -127,7 +127,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ geoJsonData }) => {
       <LayersControl position="topleft">
         <LayersControl.BaseLayer name="GoogleStreets">
           <TileLayer
-            url="http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+            url="https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
             subdomains={["mt0", "mt1", "mt2", "mt3"]}
             maxZoom={20}
             attribution="Map data © GoogleMaps contributors"
@@ -135,7 +135,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ geoJsonData }) => {
         </LayersControl.BaseLayer>
         <LayersControl.BaseLayer checked name="GoogleHybrid">
           <TileLayer
-            url="http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}"
+            url="https://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}"
             subdomains={["mt0", "mt1", "mt2", "mt3"]}
             maxZoom={20}
             attribution="Map data © GoogleMaps contributors"
@@ -143,7 +143,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ geoJsonData }) => {
         </LayersControl.BaseLayer>
         <LayersControl.BaseLayer name="GoogleEarth">
           <TileLayer
-            url="http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+            url="https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
             subdomains={["mt0", "mt1", "mt2", "mt3"]}
             maxZoom={20}
             attribution="Map data © GoogleMaps contributors"
@@ -151,7 +151,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ geoJsonData }) => {
         </LayersControl.BaseLayer>
         <LayersControl.BaseLayer name="GoogleTerrain">
           <TileLayer
-            url="http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}"
+            url="https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}"
             subdomains={["mt0", "mt1", "mt2", "mt3"]}
             maxZoom={20}
             attribution="Map data © GoogleMaps contributors"
